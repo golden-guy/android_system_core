@@ -93,6 +93,8 @@ static time_t process_needs_restart;
 
 static const char *ENV[32];
 
+static unsigned lpm_bootmode = 0;
+
 /* add_environment - add "key=value" to the current environment */
 int add_environment(const char *key, const char *val)
 {
@@ -728,6 +730,12 @@ static void import_kernel_nv(char *name, int for_emulator)
 
     if (!strcmp(name,"qemu")) {
         strlcpy(qemu, value, sizeof(qemu));
+#ifdef BOARD_LPM_BOOT_ARGUMENT_NAME
+    } else if (!strcmp(name,BOARD_LPM_BOOT_ARGUMENT_NAME)) {
+        if (!strcmp(value,BOARD_LPM_BOOT_ARGUMENT_VALUE)) {
+            lpm_bootmode = 1;
+        }
+#endif
     } else if (!strncmp(name, "androidboot.", 12) && name_len > 12) {
         const char *boot_prop_name = name + 12;
         char prop[PROP_NAME_MAX];
@@ -1002,7 +1010,7 @@ static void selinux_initialize(void)
 static int charging_mode_booting(void)
 {
 #ifndef BOARD_CHARGING_MODE_BOOTING_LPM
-    return 0;
+    return lpm_bootmode;
 #else
     int f;
     char cmb;
